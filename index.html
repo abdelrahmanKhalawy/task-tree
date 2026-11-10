@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1417">
+<title>شجرة مهام الهاكاثون</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%2210%22 fill=%22%236fcf8a%22/%3E%3Crect x=%2214%22 y=%2218%22 width=%224%22 height=%2212%22 rx=%222%22 fill=%22%23c08f61%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600;700&display=swap">
+<style>
+/* Layout: one-screen night canvas. Phases are horizontal floors stacked bottom to top; each person owns one vertical branch; the trunk runs up the middle through the gates. A phase stepper in the header says where the team is. Deliberately single dark theme: a night sky over the tree. */
+:root{
+  --bg:#0a1417;
+  --bg-2:#0f1d22;
+  --bg-3:#16292f;
+  --ink:#e8f0ea;
+  --muted:#8fa49d;
+  --line:#24383d;
+  --bark:#6e4d33;
+  --bark-hi:#c08f61;
+  --leaf:#6fcf8a;
+  --leaf-ink:#05210f;
+  --bud:#f4b649;
+  --lock:#3a4c51;
+  --hw:#ef8a6a;
+  --app:#6bb7ea;
+  --ai:#b393f2;
+  --res:#f08fb6;
+  --shared:#d6e2da;
+  --danger:#f07a72;
+  --display:"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --body:"IBM Plex Sans Arabic","Readex Pro",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+header{grid-template-columns:minmax(0,1fr)}
+header>*{min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg-2)}
+.app{height:100%;display:flex;flex-direction:column}
+
+/* header */
+header{background:var(--bg-2);border-bottom:1px solid var(--line);padding-block:12px 10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:10px;position:relative;z-index:3}
+.top{display:flex;align-items:flex-start;gap:12px 20px;flex-wrap:wrap;justify-content:space-between}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 240px}
+.brand h1{font-family:var(--display);font-weight:700;font-size:19px;margin:0;text-wrap:balance}
+.brand p{margin:0;color:var(--muted);font-size:12.5px}
+.total{font-family:var(--display);font-weight:600;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;align-self:center}
+.total b{color:var(--ink);font-size:16px}
+
+.steps{display:grid;grid-template-columns:repeat(5,minmax(118px,1fr));gap:6px;overflow-x:auto;padding-bottom:2px;max-width:100%;min-width:0}
+.step{border:1px solid var(--line);background:var(--bg-3);border-radius:12px;padding:8px 10px;display:grid;gap:5px;text-align:right;color:var(--ink);cursor:pointer;font:inherit;min-width:0}
+.step .nm{font:600 12.5px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step .meta{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.step .tr{height:5px;border-radius:99px;background:var(--bg);overflow:hidden}
+.step .tr i{display:block;height:100%;width:0;background:var(--leaf);transition:width .6s ease}
+.step.cur{border-color:var(--bud);background:rgba(244,182,73,.08)}
+.step.cur .tr i{background:var(--bud)}
+.step.cur .meta em{color:var(--bud);font-style:normal;font-weight:600}
+.step.fin{border-color:rgba(111,207,138,.45)}
+.step.fin .meta em{color:var(--leaf);font-style:normal}
+.step .meta em{font-style:normal}
+
+.row2{display:flex;gap:10px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;min-width:0;max-width:100%;scrollbar-width:thin}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--bg-3);color:var(--ink);border-radius:99px;padding:5px 11px;font:500 12.5px var(--body);cursor:pointer;display:flex;align-items:center;gap:6px}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.chip .n{color:var(--muted);font-variant-numeric:tabular-nums;font-size:11.5px}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.chip[aria-pressed="true"] .n{color:var(--bg)}
+.chip:focus-visible,button:focus-visible,.node:focus-visible{outline:2px solid var(--bud);outline-offset:2px}
+.legend{display:flex;gap:12px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend b{width:12px;height:12px;border-radius:4px;display:inline-block}
+.notice{font-size:12.5px;color:var(--bud);margin:0}
+
+/* canvas */
+.stage{position:relative;flex:1;min-height:0;overflow:hidden;
+  background:
+    radial-gradient(1.2px 1.2px at 12% 18%,rgba(255,255,255,.5),transparent 60%),
+    radial-gradient(1px 1px at 28% 62%,rgba(255,255,255,.3),transparent 60%),
+    radial-gradient(1.4px 1.4px at 46% 12%,rgba(255,255,255,.45),transparent 60%),
+    radial-gradient(1px 1px at 63% 40%,rgba(255,255,255,.28),transparent 60%),
+    radial-gradient(1.2px 1.2px at 78% 22%,rgba(255,255,255,.4),transparent 60%),
+    radial-gradient(1px 1px at 88% 70%,rgba(255,255,255,.28),transparent 60%),
+    radial-gradient(1.3px 1.3px at 6% 80%,rgba(255,255,255,.3),transparent 60%),
+    radial-gradient(120% 60% at 50% 115%,rgba(192,143,97,.14),transparent 70%),
+    var(--bg)}
+svg#tree{width:100%;height:100%;display:block;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+svg#tree.dragging{cursor:grabbing}
+.node{cursor:pointer}
+.node .box{transition:fill .3s,stroke .3s}
+.node.dim{opacity:.2}
+.node.hl .box{stroke-width:3}
+.node.fresh .glow{animation:pulse 1.4s ease-in-out 3}
+.pop{animation:pop .5s ease;transform-box:fill-box;transform-origin:center}
+@keyframes pulse{0%,100%{opacity:0}50%{opacity:.85}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.1)}100%{transform:scale(1)}}
+.edge{fill:none;stroke-linecap:round}
+.edge.flow{stroke-dasharray:6 8;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-14}}
+.edge.dim,.lane.dim{opacity:.12}
+.band-lbl{cursor:pointer}
+@media (prefers-reduced-motion:reduce){.node.fresh .glow,.pop,.edge.flow{animation:none}}
+
+.zoom{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom,0px));right:calc(14px + env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:6px;z-index:2}
+.zoom button,.focus-btn{background:var(--bg-2);color:var(--ink);border:1px solid var(--line);border-radius:12px;font:600 15px var(--display);cursor:pointer}
+.zoom button{width:42px;height:42px}
+.focus-btn{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom,0px));right:calc(66px + env(safe-area-inset-right,0px));height:42px;padding:0 14px;font-size:13px;z-index:2;display:flex;align-items:center;gap:8px}
+.focus-btn::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--bud);box-shadow:0 0 0 3px rgba(244,182,73,.25)}
+.loading{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--bg-2);border:1px solid var(--line);border-radius:99px;padding:6px 14px;font-size:12.5px;color:var(--muted);z-index:2;max-width:calc(100% - 32px)}
+
+/* detail sheet */
+.sheet{position:absolute;top:12px;bottom:12px;left:calc(12px + env(safe-area-inset-left,0px));width:min(360px,calc(100% - 24px));background:var(--bg-2);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;z-index:4;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.sheet .close{position:absolute;top:12px;left:12px;width:32px;height:32px;border-radius:10px;border:1px solid var(--line);background:var(--bg-3);color:var(--ink);cursor:pointer;font-size:17px;line-height:1}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.tag .ph{border:1px solid var(--line);border-radius:99px;padding:2px 9px}
+.tag .opt{border:1px dashed var(--muted);border-radius:99px;padding:2px 9px}
+.sheet h2{font-family:var(--display);font-size:20px;font-weight:600;margin:0;padding-left:36px;text-wrap:balance;line-height:1.35}
+.owners{display:flex;gap:6px;flex-wrap:wrap}
+.owner{display:flex;align-items:center;gap:6px;background:var(--bg-3);border-radius:99px;padding:4px 10px;font-size:12.5px}
+.owner .dot{width:8px;height:8px;border-radius:50%}
+.desc{margin:0;line-height:1.75;color:#cfdcd4;max-width:62ch}
+.status{border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.6}
+.status.done{background:rgba(111,207,138,.12);color:var(--leaf)}
+.status.open{background:rgba(244,182,73,.12);color:var(--bud)}
+.status.locked{background:var(--bg-3);color:var(--muted)}
+.sheet h3{font-size:12.5px;color:var(--muted);font-weight:500;margin:0 0 6px}
+.deps{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.deps li button{width:100%;text-align:right;display:flex;align-items:center;gap:8px;background:var(--bg-3);border:1px solid transparent;border-radius:10px;padding:7px 10px;color:var(--ink);font:500 13px var(--body);cursor:pointer}
+.deps li button:hover{border-color:var(--line)}
+.deps .s{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.deps .w{margin-inline-start:auto;color:var(--muted);font-size:11.5px}
+.act{margin-top:auto;display:grid;gap:8px}
+.primary{border:0;border-radius:12px;padding:13px 16px;font:600 15px var(--display);cursor:pointer;background:var(--leaf);color:var(--leaf-ink)}
+.primary[disabled]{background:var(--bg-3);color:var(--muted);cursor:not-allowed}
+.ghost{border:1px solid var(--line);border-radius:12px;padding:11px 16px;font:500 13.5px var(--body);cursor:pointer;background:transparent;color:var(--ink)}
+.ghost.warn{border-color:var(--danger);color:var(--danger)}
+.hint{font-size:12px;color:var(--muted);margin:0;line-height:1.6}
+
+.toast{position:absolute;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 16px;font:500 13.5px var(--body);z-index:5;max-width:calc(100% - 32px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+
+@media (max-width:720px){
+  .brand h1{font-size:17px}
+  .brand p{display:none}
+  .legend{display:none}
+  .steps{grid-template-columns:repeat(5,minmax(104px,1fr))}
+  .sheet{top:auto;bottom:0;left:0;right:0;width:auto;max-height:66%;border-radius:20px 20px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+  .focus-btn span{display:none}
+}
+.setup{position:absolute;inset:0;display:grid;place-items:center;background:rgba(5,12,14,.72);z-index:6;padding:16px}
+.setup .card{width:min(460px,100%);background:var(--bg-2);border:1px solid var(--line);border-radius:18px;padding:20px;display:grid;gap:12px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.setup h2{font-family:var(--display);font-size:19px;margin:0}
+.setup p{margin:0;color:var(--muted);line-height:1.7;font-size:13px}
+.setup input{width:100%;box-sizing:border-box;background:var(--bg-3);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:11px 12px;font:500 13px var(--body);direction:ltr;text-align:left}
+.setup .row{display:flex;gap:8px;flex-wrap:wrap}
+.setup .row>*{flex:1 1 140px}
+.setup .err{color:var(--danger);font-size:12.5px;margin:0}
+.who{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.who button{border:1px solid var(--line);background:var(--bg-3);color:var(--ink);border-radius:10px;padding:9px 6px;font:500 13px var(--body);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.who button .dot{width:8px;height:8px;border-radius:50%}
+.me-line{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.me-line button{background:none;border:0;color:var(--bud);font:500 12px var(--body);cursor:pointer;padding:2px}
+.notice button{background:none;border:1px solid var(--bud);color:var(--bud);border-radius:99px;font:500 12px var(--body);padding:2px 10px;margin-inline-start:8px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app" dir="rtl">
+  <header>
+    <div class="top">
+      <div class="brand">
+        <h1>شجرة المهمة</h1>
+        <p>كل دور في الشجرة مرحلة، وكل فرع شخص. خلّص مهمتك واضغط عليها، والفروع اللي بعدها تتفتح.</p>
+      </div>
+      <div class="total" id="total" aria-live="polite"></div>
+    </div>
+    <nav class="steps" id="steps" aria-label="المراحل"></nav>
+    <div class="row2">
+      <div class="chips" id="chips" role="toolbar" aria-label="فلتر حسب الشخص"></div>
+      <div class="legend" aria-hidden="true">
+        <span><b style="background:var(--leaf)"></b>خلصت</span>
+        <span><b style="background:transparent;border:2px solid var(--bud)"></b>متاحة دلوقتي</span>
+        <span><b style="background:var(--lock)"></b>مقفولة</span>
+      </div>
+    </div>
+    <p class="notice" id="notice" hidden></p>
+  </header>
+
+  <div class="stage" id="stage">
+    <svg id="tree" role="application" aria-label="شجرة المهام">
+      <g id="world">
+        <g id="bands"></g>
+        <g id="lanes"></g>
+        <g id="edges"></g>
+        <g id="trunk"></g>
+        <g id="nodes"></g>
+        <g id="labels"></g>
+      </g>
+    </svg>
+    <div class="loading" id="loading">بيحمّل التقدم المشترك...</div>
+    <button class="focus-btn" id="focusBtn" type="button" title="روح للمهام المتاحة"><span>المتاح دلوقتي</span></button>
+    <div class="zoom">
+      <button type="button" id="zin" aria-label="تكبير">+</button>
+      <button type="button" id="zout" aria-label="تصغير">−</button>
+      <button type="button" id="zfit" aria-label="عرض الشجرة كلها">⤢</button>
+    </div>
+    <aside class="sheet" id="sheet" hidden aria-live="polite"></aside>
+    <div class="toast" id="toast" hidden role="status"></div>
+    <div class="setup" id="setup" hidden>
+      <form class="card" id="setupForm">
+        <h2>وصّل الشجرة بالداتابيز</h2>
+        <p>حط لينك الـ Realtime Database بتاع فايربيز، والصفحة هتطلعلك لينك واحد تبعته للتيم. أي حد يفتحه يشوف نفس التقدم لحظة بلحظة.</p>
+        <input id="dbInput" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://xxxx-default-rtdb.firebaseio.com">
+        <p class="err" id="setupErr" hidden></p>
+        <div class="row">
+          <button class="primary" type="submit">وصّل</button>
+          <button class="ghost" type="button" id="setupDemo">جرّبها من غير حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const PEOPLE = {
+    sashraf:{name:"شهد أشرف", track:"ai", note:"التيم ليد"},
+    abd:{name:"عبدالرحمن", track:"app"},
+    shahd:{name:"شهد", track:"app"},
+    ammar:{name:"عمار", track:"hw"},
+    mohamed:{name:"محمد", track:"ai"},
+    nada:{name:"ندى", track:"res"}
+  };
+  const TRACK_COLOR = {hw:"var(--hw)", app:"var(--app)", ai:"var(--ai)", res:"var(--res)", shared:"var(--shared)"};
+  const PHASES = [
+    {name:"الانطلاق", time:"الجمعة 10:00"},
+    {name:"نسخة 1: تتسلم", time:"لحد 5 العصر"},
+    {name:"نسخة 2: الفضاء", time:"لحد 11 بالليل"},
+    {name:"نسخة 3: الإبهار", time:"لحد 4 الفجر"},
+    {name:"التسليم", time:"لحد 7 الصبح"}
+  ];
+  // one vertical branch per person; shared work and gates sit on the trunk in the middle
+  const COL_X = {ammar:-600, shahd:-400, abd:-200, center:0, sashraf:200, mohamed:400, nada:600};
+  const COL_ORDER = ["ammar","shahd","abd","sashraf","mohamed","nada"];
+
+  // The plan. kind: root | task | gate | crown. opt: extra, not needed to open the next gate.
+  const TASKS = [
+    {id:"r0", t:"بداية الهاكاثون", who:["all"], tr:"shared", ph:0, kind:"root", deps:[], d:"الجمعة الصبح بعد الافتتاح. اضغطوا هنا أول ما تبدأوا الشغل، وده بيفتح أول فروع الشجرة."},
+    {id:"k1", t:"قراية مصادر التحدي", who:["nada"], tr:"res", ph:0, deps:["r0"], d:"مصادر التحدي الرسمية بتنزل يوم 13 الصبح. اقريها وطلّعي أهم 3 حاجات وابعتيهم للفريق."},
+    {id:"k6", t:"توصيل الحساسات", who:["ammar"], tr:"hw", ph:0, deps:["r0"], d:"توصيل المتحكم مع حساس النبض والأكسجين وحساس الحرارة، والتأكد إن كل حساس بيقرا."},
+    {id:"k2", t:"تثبيت النطاق", who:["sashraf","abd"], tr:"shared", ph:0, deps:["k1"], d:"تحديد إيه اللي هيتبني وإيه المؤجل، من جدول البرين ستورمينج في الخطة. الكلمة الأخيرة للتيم ليد."},
+    {id:"k3", t:"شكل القراءة الموحّد", who:["abd","shahd"], tr:"app", ph:0, deps:["k2"], d:"الاتفاق على شكل القراءة الواحدة: المؤشر، والقيمة، والوقت، والمصدر. يتبعت للكل عشان كل مسار يشتغل لوحده."},
+    {id:"k4", t:"لينك فاضي شغال", who:["abd"], tr:"app", ph:0, deps:["k3"], d:"نشر أول نسخة فاضية عشان نتأكد إن النشر شغال من بدري، مش الساعة 4 الفجر."},
+    {id:"k5", t:"البيانات التجريبية", who:["mohamed"], tr:"ai", ph:0, deps:["k3"], d:"أسبوعين بيانات لرائد فضاء حالته بتسوء تدريجيًا، بنفس شكل القراءة المتفق عليه. دي أساس سيناريو اليوم 143."},
+
+    {id:"n1", t:"حدود الألوان بمصادرها", who:["nada"], tr:"res", ph:1, deps:["k1"], d:"أخضر وأصفر وأحمر لكل مؤشر من الستة، وكل حد معاه مصدره، ونصيحة قصيرة لكل حالة."},
+    {id:"a1", t:"السيرفر وحفظ القراءات", who:["abd"], tr:"app", ph:1, deps:["k4"], d:"استقبال القراءات وحفظها وإرجاعها للشاشات."},
+    {id:"a3", t:"فورم الإدخال", who:["shahd"], tr:"app", ph:1, deps:["k4"], d:"إدخال المؤشرات اللي مش بيقيسها الجهاز: الضغط والسكر والنوم والمزاج."},
+    {id:"h1", t:"الجهاز يقرا بثبات", who:["ammar"], tr:"hw", ph:1, deps:["k6"], d:"قراءات النبض والأكسجين والحرارة ثابتة ومنطقية لما حد يحط صباعه."},
+    {id:"i1", t:"موديل الطبيعي بتاعك", who:["sashraf"], tr:"ai", ph:1, deps:["k5"], d:"الموديل يتعلم الطبيعي لكل رائد فضاء ويكتشف الانحراف، على البيانات التجريبية."},
+    {id:"a2", t:"قواعد الألوان", who:["abd"], tr:"app", ph:1, deps:["a1","n1"], d:"كل قراءة تاخد لونها من الحدود اللي ندى جمعتها."},
+    {id:"a4", t:"الداشبورد والرسوم", who:["shahd"], tr:"app", ph:1, deps:["a3","k5"], d:"بطاقة لكل مؤشر بلونه، ورسم بياني لكل واحد على البيانات التجريبية."},
+    {id:"g1", t:"بوابة 1: نسخة تتسلم", who:["all"], tr:"shared", ph:1, kind:"gate", deps:["a2","a4"], d:"لينك شغال فيه إدخال المؤشرات والألوان والرسوم والبيانات التجريبية. لو الوقت خلص فجأة، دي اللي تتسلم. المستهدف: الجمعة 5 العصر."},
+
+    {id:"a5", t:"استقبال القراءات لايف", who:["abd"], tr:"app", ph:2, deps:["g1"], d:"القراءات اللي جاية من الجهاز تظهر على الشاشة في نفس اللحظة."},
+    {id:"a6", t:"شاشة طبيب الأرض", who:["abd"], tr:"app", ph:2, deps:["g1"], d:"شاشة تانية بتستقبل التقارير والتنبيهات متأخرة زي الحقيقة."},
+    {id:"a7", t:"شاشة القرار وعداد التأخير", who:["shahd"], tr:"app", ph:2, deps:["g1"], d:"للحالة الحمرا: أتصرف لوحدي ولا أبلّغ؟ مع عداد بيقول الرد هيوصل بعد قد إيه حسب مكان المهمة."},
+    {id:"h2", t:"الجهاز يبعت للسيرفر", who:["ammar"], tr:"hw", ph:2, deps:["h1","a5"], d:"الجهاز يبعت القراءات بنفس الشكل المتفق عليه. لو الشبكة وقعت: هوت سبوت من موبايل أو كابل."},
+    {id:"i2", t:"الموديل كخدمة", who:["sashraf"], tr:"ai", ph:2, deps:["i1","g1"], d:"الموديل شغال كخدمة التطبيق بيناديها، ومعاه نتايج محسوبة مسبقًا كبديل."},
+    {id:"n2", t:"نصوص الشرح الفضائي", who:["nada"], tr:"res", ph:2, deps:["n1"], d:"لكل مؤشر: مرتبط بأنهي خطر من مخاطر ناسا الخمسة، وبيتأثر إزاي، بمصدره."},
+    {id:"i3", t:"شرح السبب الفضائي", who:["mohamed"], tr:"ai", ph:2, deps:["i2","n2"], d:"كل انحراف يكتشفه الموديل يتربط بالخطر الفضائي المناسب ويتشرح لرائد الفضاء."},
+    {id:"g2", t:"بوابة 2: نسخة الفضاء", who:["all"], tr:"shared", ph:2, kind:"gate", deps:["h2","a6","a7","i3"], d:"الجهاز لايف، والذكاء الاصطناعي شغال، وشاشة طبيب الأرض. المستهدف: الجمعة 11 بالليل."},
+
+    {id:"a8", t:"الجسم التفاعلي", who:["shahd"], tr:"app", ph:3, deps:["g2"], d:"جسم إنسان أعضاؤه بتنور بلون حالتها، وتدوس على أي عضو يظهر شرحه."},
+    {id:"a9", t:"أوضاع المهمة", who:["abd"], tr:"app", ph:3, opt:true, deps:["g2"], d:"المحطة والقمر والمريخ، كل وضع بالجاذبية والتأخير بتاعه."},
+    {id:"i4", t:"توقع الاتجاه", who:["sashraf"], tr:"ai", ph:3, deps:["g2"], d:"لو كمل كده، هيبقى أحمر بعد كام يوم."},
+    {id:"n3", t:"مصادر المساعد الطبي", who:["nada"], tr:"res", ph:3, deps:["n2"], d:"ملفات ناسا اللي المساعد هيرد منها، ومتجمّعة ومنضمة."},
+    {id:"i5", t:"المساعد الطبي", who:["mohamed"], tr:"ai", ph:3, opt:true, deps:["g2","n3"], d:"بيرد من مصادر ناسا بس ويذكر المصدر، ومعاه إجابات جاهزة لو مفيش إنترنت."},
+    {id:"h3", t:"شكل الجهاز", who:["ammar"], tr:"hw", ph:3, deps:["g2"], d:"علبة أو إسورة عشان الجهاز يبان حلو في الفيديو وقدام الحكام."},
+    {id:"f2", t:"سكريبت الفيديو", who:["nada"], tr:"res", ph:3, deps:["g2"], d:"سكريبت 30 ثانية بقصة اليوم 143، بالإنجليزي أو بترجمة إنجليزي."},
+    {id:"g3", t:"بوابة 3: نسخة الإبهار", who:["all"], tr:"shared", ph:3, kind:"gate", deps:["a8","i4","h3"], d:"المستهدف: 4 الفجر. المهام الإضافية مش شرط عشان البوابة دي تتفتح."},
+
+    {id:"f1", t:"تجميد المميزات", who:["sashraf"], tr:"shared", ph:4, deps:["g3"], d:"من هنا مفيش كود جديد، إصلاح أخطاء بس. قرار التيم ليد."},
+    {id:"f3", t:"تصوير ومونتاج الفيديو", who:["ammar"], tr:"hw", ph:4, deps:["f1","f2"], d:"الفيديو النهائي 30 ثانية، واللينك عام ومتجرّب من نافذة خاصة."},
+    {id:"f4", t:"7 سلايدز احتياطي", who:["nada"], tr:"res", ph:4, deps:["f1"], d:"التحدي، والحل، وليه مهم، وبيشتغل إزاي. 7 بالظبط شاملة الغلاف."},
+    {id:"f5", t:"ملف الشرح والمصادر", who:["abd"], tr:"app", ph:4, deps:["f1"], d:"ملف الشرح على جيت هب، وكل المصادر، وإزاي استخدمنا الذكاء الاصطناعي."},
+    {id:"f6", t:"تسليم فورم القاهرة", who:["abd"], tr:"app", ph:4, deps:["f3","f5"], d:"لينك الفيديو والمشروع في الفورم المحلي."},
+    {id:"f7", t:"تسليم الموقع العالمي", who:["abd"], tr:"app", ph:4, deps:["f6"], d:"نفس المشروع على الموقع العالمي، عشان ندخل التحكيم العالمي."},
+    {id:"f8", t:"بروفة عرض الجمهور", who:["sashraf"], tr:"ai", ph:4, deps:["f3"], d:"دقيقة عرض، والحكم يجرب الجهاز بإيده."},
+    {id:"c0", t:"جاهزين للتحكيم", who:["all"], tr:"shared", ph:4, kind:"crown", deps:["f7","f8","f4"], d:"قمة الشجرة. لو وصلتوا هنا، كل حاجة اتسلمت ومستعدين."}
+  ];
+  const BY_ID = Object.fromEntries(TASKS.map(t => [t.id, t]));
+  const CHILDREN = {};
+  TASKS.forEach(t => t.deps.forEach(d => (CHILDREN[d] = CHILDREN[d] || []).push(t.id)));
+  const colOf = t => t.tr === "shared" ? "center" : t.who[0];
+  const onTrunk = t => colOf(t) === "center";
+
+  // ---------- layout: floors per phase, branches per person ----------
+  const W = 172, H = 64, ROW_H = 96, FLOOR_GAP = 70;
+  const pos = {}, bands = [];
+  let base = 0;
+  for (let ph = 0; ph < PHASES.length; ph++) {
+    const list = TASKS.filter(t => t.ph === ph);
+    const row = {}, taken = new Set();
+    let maxRow = -1;
+    list.filter(t => t.kind !== "gate" && t.kind !== "crown").forEach(t => {
+      let r = 0;
+      t.deps.forEach(d => { if (row[d] !== undefined) r = Math.max(r, row[d] + 1); });
+      const c = colOf(t);
+      while (taken.has(c + ":" + r)) r++;
+      taken.add(c + ":" + r); row[t.id] = r; maxRow = Math.max(maxRow, r);
+    });
+    list.filter(t => t.kind === "gate" || t.kind === "crown").forEach(t => { row[t.id] = maxRow + 1; maxRow = maxRow + 1; });
+    list.forEach(t => pos[t.id] = {x: COL_X[colOf(t)], y: base - row[t.id] * ROW_H});
+    const bottom = base + H / 2 + 30, top = base - maxRow * ROW_H - H / 2 - 34;
+    bands.push({ph, top, bottom});
+    base = top - FLOOR_GAP + 34 - H / 2 - 30;
+  }
+  const TREE_X0 = COL_X.ammar - W / 2 - 30, TREE_X1 = COL_X.nada + W / 2 + 30;
+
+  // ---------- state ----------
+  let done = {}, prevStatus = null, selected = null, person = "all";
+  let myId = null, readOnly = false, localOnly = false, DB = "";
+  try { const p = localStorage.getItem("tree-person"); if (p && (p === "all" || PEOPLE[p])) person = p; } catch (e) {}
+  try { const m = localStorage.getItem("tree-me"); if (m && PEOPLE[m]) myId = m; } catch (e) {}
+  const setMe = k => { myId = k; try { localStorage.setItem("tree-me", k); } catch (e) {} };
+  // Database URL: from the link (#db=...) first, then what this browser saw last time.
+  function normDb(raw) {
+    if (!raw) return "";
+    let u = String(raw).trim();
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    try { const x = new URL(u); if (!/(\.firebaseio\.com|\.firebasedatabase\.app)$/i.test(x.hostname)) return ""; return "https://" + x.hostname; } catch (e) { return ""; }
+  }
+  try { DB = normDb(new URLSearchParams(location.hash.slice(1)).get("db")); } catch (e) {}
+  const TEAM_DB = "https://tree-fabb2-default-rtdb.europe-west1.firebasedatabase.app";
+  if (!DB) DB = TEAM_DB;
+  if (DB) { try { localStorage.setItem("tree-db", DB); } catch (e) {} }
+  const shareLink = () => location.origin + location.pathname + "#db=" + DB.replace(/^https:\/\//, "");
+  const status = id => done[id] ? "done" : (BY_ID[id].deps.every(d => done[d]) ? "open" : "locked");
+  const phaseStats = st => PHASES.map((p, i) => {
+    const list = TASKS.filter(t => t.ph === i && !t.opt);
+    return {n: list.filter(t => st[t.id] === "done").length, total: list.length};
+  });
+  const currentPhase = st => { const ps = phaseStats(st); const i = ps.findIndex(p => p.n < p.total); return i === -1 ? PHASES.length : i; };
+
+  // ---------- svg helpers ----------
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (parent) parent.appendChild(n); return n; };
+  const txt = (parent, s, attrs) => { const n = el("text", Object.assign({direction:"rtl"}, attrs), parent); n.textContent = s; return n; };
+  const measureCtx = document.createElement("canvas").getContext("2d");
+  const wrap = (text, max, font) => {
+    measureCtx.font = font;
+    const lines = []; let cur = "";
+    text.split(" ").forEach(w => { const test = cur ? cur + " " + w : w; if (measureCtx.measureText(test).width > max && cur) { lines.push(cur); cur = w; } else cur = test; });
+    if (cur) lines.push(cur);
+    return lines.slice(0, 2);
+  };
+
+  const svg = document.getElementById("tree"), world = document.getElementById("world");
+  const gBands = document.getElementById("bands"), gLanes = document.getElementById("lanes"), gEdges = document.getElementById("edges");
+  const gTrunk = document.getElementById("trunk"), gNodes = document.getElementById("nodes"), gLabels = document.getElementById("labels");
+
+  // floors
+  const bandEls = bands.map(b => {
+    const g = el("g", {}, gBands);
+    const rect = el("rect", {x:TREE_X0 - 20, y:b.top, width:TREE_X1 - TREE_X0 + 40, height:b.bottom - b.top, rx:26, "stroke-width":1.5}, g);
+    const lbl = el("g", {class:"band-lbl", transform:`translate(${TREE_X1 + 236} ${b.top + 30})`, "data-ph":b.ph}, gLabels);
+    const num = txt(lbl, String(b.ph === 0 ? "0" : b.ph), {x:0, y:6, "text-anchor":"start", "font-family":"Readex Pro, sans-serif", "font-size":34, "font-weight":700});
+    const name = txt(lbl, PHASES[b.ph].name, {x:0, y:38, "text-anchor":"start", "font-family":"Readex Pro, sans-serif", "font-size":17, "font-weight":600});
+    const meta = txt(lbl, "", {x:0, y:62, "text-anchor":"start", "font-family":"IBM Plex Sans Arabic, sans-serif", "font-size":13});
+    const pill = el("g", {transform:"translate(0 78)"}, lbl);
+    const pillRect = el("rect", {x:-118, y:0, width:118, height:26, rx:13}, pill);
+    const pillTxt = txt(pill, "", {x:-59, y:17.5, "text-anchor":"middle", "font-family":"IBM Plex Sans Arabic, sans-serif", "font-size":12.5, "font-weight":600});
+    // number sits right-aligned in RTL: anchor start == right edge
+    return {b, rect, num, name, meta, pillRect, pillTxt, pill};
+  });
+
+  // ground, roots and branch name tags
+  const rootP = pos.r0, groundY = bands[0].bottom + 26;
+  el("path", {d:`M${TREE_X0 - 40} ${groundY} Q 0 ${groundY - 14} ${TREE_X1 + 40} ${groundY}`, fill:"none", stroke:"var(--line)", "stroke-width":2}, gBands);
+  [[-1, 130], [1, 150], [-1, 70], [1, 80]].forEach(([s, len]) => el("path", {d:`M${s * 16} ${groundY - 4} q ${s * len * 0.4} 14 ${s * len} 32`, fill:"none", stroke:"var(--bark)", "stroke-width":6, "stroke-linecap":"round", opacity:.75}, gBands));
+
+  // person branches: a lane from the trunk out to the column, then straight up through every floor
+  const laneEls = {};
+  COL_ORDER.forEach(k => {
+    const ids = TASKS.filter(t => colOf(t) === k).map(t => t.id);
+    const ys = ids.map(id => pos[id].y);
+    const yLow = Math.max(...ys), yHigh = Math.min(...ys), x = COL_X[k];
+    const startY = rootP.y - 30;
+    const p = el("path", {class:"lane", d:`M0 ${startY} C ${x * 0.35} ${startY - 10}, ${x} ${yLow + 120}, ${x} ${yLow + H / 2} L ${x} ${yHigh - H / 2 - 10}`, fill:"none", stroke:"var(--bark)", "stroke-width":5, "stroke-linecap":"round", opacity:.55}, gLanes);
+    laneEls[k] = p;
+    const tag = el("g", {transform:`translate(${x} ${groundY + 34})`}, gLabels);
+    el("circle", {cx:0, cy:-5, r:5, fill:TRACK_COLOR[PEOPLE[k].track]}, tag);
+    txt(tag, PEOPLE[k].name, {x:0, y:18, "text-anchor":"middle", "font-family":"Readex Pro, sans-serif", "font-size":14, "font-weight":600, fill:"var(--ink)"});
+    if (PEOPLE[k].note) txt(tag, PEOPLE[k].note, {x:0, y:36, "text-anchor":"middle", "font-family":"IBM Plex Sans Arabic, sans-serif", "font-size":11.5, fill:"var(--bud)"});
+    const topTag = txt(gLabels, PEOPLE[k].name, {x, y:yHigh - H / 2 - 22, "text-anchor":"middle", "font-family":"IBM Plex Sans Arabic, sans-serif", "font-size":12, fill:"var(--muted)"});
+  });
+
+  // trunk: thick bark up the middle through the shared nodes and gates
+  const trunkIds = TASKS.filter(onTrunk).map(t => t.id).sort((a, b) => pos[b].y - pos[a].y);
+  const trunkSegs = [];
+  trunkIds.forEach((id, i) => {
+    const a = i === 0 ? {x:0, y:groundY + 6} : pos[trunkIds[i - 1]];
+    const b = pos[id];
+    const w = Math.max(8, 20 - i * 2);
+    const seg = el("line", {x1:0, y1:a.y, x2:0, y2:b.y, "stroke-width":w, "stroke-linecap":"round"}, gTrunk);
+    trunkSegs.push({seg, to:id, from: i === 0 ? null : trunkIds[i - 1]});
+  });
+
+  // dependency edges, classified so the picture stays calm
+  const edgeEls = [];
+  TASKS.forEach(t => t.deps.forEach(d => {
+    const a = pos[d], b = pos[t.id], A = BY_ID[d];
+    const ca = colOf(A), cb = colOf(t);
+    let kind;
+    if (ca === "center" && cb === "center") kind = "trunk";
+    else if (ca === cb) kind = "branch";
+    else if (ca === "center") kind = "limb";
+    else if (cb === "center") kind = "join";
+    else kind = "cross";
+    if (kind === "trunk") return;
+    let dPath;
+    const y1 = a.y - H / 2, y2 = b.y + H / 2;
+    if (kind === "branch") dPath = `M${a.x} ${y1} L ${b.x} ${y2}`;
+    else { const my = (y1 + y2) / 2; dPath = `M${a.x} ${y1} C ${a.x} ${my}, ${b.x} ${my}, ${b.x} ${y2}`; }
+    const p = el("path", {class:"edge", d:dPath}, gEdges);
+    edgeEls.push({p, from:d, to:t.id, kind});
+  }));
+
+  // nodes
+  const nodeEls = {};
+  TASKS.forEach(t => {
+    const {x, y} = pos[t.id];
+    const g = el("g", {class:"node", "data-id":t.id, tabindex:"0", role:"button", transform:`translate(${x} ${y})`}, gNodes);
+    const inner = el("g", {}, g);
+    const special = t.kind === "gate" || t.kind === "crown" || t.kind === "root";
+    const w = t.kind === "crown" ? W + 46 : t.kind === "gate" ? W + 28 : W;
+    el("rect", {class:"glow", x:-w / 2 - 8, y:-H / 2 - 8, width:w + 16, height:H + 16, rx:22, fill:"none", stroke:"var(--bud)", "stroke-width":3, opacity:0}, inner);
+    if (t.kind === "gate" || t.kind === "crown") el("rect", {class:"ring", x:-w / 2 - 5, y:-H / 2 - 5, width:w + 10, height:H + 10, rx:36, fill:"none", "stroke-width":1.2}, inner);
+    el("rect", {class:"box", x:-w / 2, y:-H / 2, width:w, height:H, rx:special ? 32 : 14, "stroke-width":1.6}, inner);
+    if (!special && colOf(t) !== "center") el("rect", {x:w / 2 - 6, y:-H / 2 + 12, width:3, height:H - 24, rx:1.5, fill:TRACK_COLOR[t.tr]}, inner);
+    const badge = el("g", {class:"badge", transform:`translate(${w / 2 - 22} ${-H / 2 + 18})`}, inner);
+    el("circle", {r:9}, badge);
+    el("path", {class:"icon", fill:"none", "stroke-width":2, "stroke-linecap":"round", "stroke-linejoin":"round"}, badge);
+    const lines = wrap(t.t, w - 60, "600 13.5px 'IBM Plex Sans Arabic'");
+    const owners = t.who[0] === "all" ? "الفريق كله" : t.who.map(k => PEOPLE[k].name).join(" و");
+    const ty = lines.length === 1 ? -3 : -11;
+    lines.forEach((ln, i) => txt(inner, ln, {class:"title", x:0, y:ty + i * 17, "text-anchor":"middle", "font-family":"IBM Plex Sans Arabic, sans-serif", "font-size":13.5, "font-weight":600}));
+    txt(inner, (t.opt ? "إضافي · " : "") + owners, {class:"who", x:0, y:ty + lines.length * 17 + 3, "text-anchor":"middle", "font-family":"IBM Plex Sans Arabic, sans-serif", "font-size":11.5});
+    g.setAttribute("aria-label", t.t + "، " + owners);
+    nodeEls[t.id] = {g, inner};
+  });
+
+  const ICON = {done:"M-4 0.5 L-1 3.5 L4.5 -3", open:"M0 -3.5 L0 3.5 M-3.5 0 L3.5 0", locked:"M-3.5 -0.5 h7 v5 h-7 z M-2 -0.5 v-2 a2 2 0 0 1 4 0 v2"};
+  const isMine = t => person === "all" || t.who.includes(person) || t.who[0] === "all";
+
+  function paint() {
+    const st = {};
+    TASKS.forEach(t => st[t.id] = status(t.id));
+    const cur = currentPhase(st), ps = phaseStats(st);
+
+    // floors
+    bandEls.forEach(({b, rect, num, name, meta, pillRect, pillTxt}) => {
+      const s = ps[b.ph];
+      const state = b.ph < cur ? "fin" : b.ph === cur ? "cur" : "next";
+      rect.setAttribute("fill", state === "cur" ? "rgba(244,182,73,.06)" : state === "fin" ? "rgba(111,207,138,.05)" : "rgba(255,255,255,.012)");
+      rect.setAttribute("stroke", state === "cur" ? "var(--bud)" : state === "fin" ? "rgba(111,207,138,.35)" : "var(--line)");
+      rect.setAttribute("stroke-dasharray", state === "cur" ? "8 7" : "");
+      num.setAttribute("fill", state === "cur" ? "var(--bud)" : state === "fin" ? "var(--leaf)" : "var(--lock)");
+      name.setAttribute("fill", state === "next" ? "var(--muted)" : "var(--ink)");
+      meta.setAttribute("fill", "var(--muted)");
+      meta.textContent = `${s.n} من ${s.total} خلصت · ${PHASES[b.ph].time}`;
+      pillRect.setAttribute("fill", state === "cur" ? "var(--bud)" : state === "fin" ? "rgba(111,207,138,.18)" : "var(--bg-3)");
+      pillTxt.setAttribute("fill", state === "cur" ? "var(--bg)" : state === "fin" ? "var(--leaf)" : "var(--muted)");
+      pillTxt.textContent = state === "cur" ? "إحنا هنا" : state === "fin" ? "خلصت" : "لسه";
+    });
+
+    // trunk
+    trunkSegs.forEach(({seg, to}) => seg.setAttribute("stroke", st[to] === "done" ? "var(--bark-hi)" : "var(--bark)"));
+
+    // lanes
+    COL_ORDER.forEach(k => laneEls[k].classList.toggle("dim", person !== "all" && person !== k));
+
+    // nodes
+    TASKS.forEach(t => {
+      const s = st[t.id], {g} = nodeEls[t.id];
+      const box = g.querySelector(".box"), badge = g.querySelector(".badge circle"), icon = g.querySelector(".badge .icon"), ring = g.querySelector(".ring");
+      const titles = g.querySelectorAll(".title"), who = g.querySelector(".who");
+      const special = t.kind === "gate" || t.kind === "crown" || t.kind === "root";
+      if (s === "done") {
+        box.setAttribute("fill", "var(--leaf)"); box.setAttribute("stroke", "var(--leaf)"); box.removeAttribute("stroke-dasharray");
+        titles.forEach(n => n.setAttribute("fill", "var(--leaf-ink)")); who.setAttribute("fill", "var(--leaf-ink)");
+        badge.setAttribute("fill", "var(--leaf-ink)"); icon.setAttribute("stroke", "var(--leaf)");
+      } else if (s === "open") {
+        box.setAttribute("fill", special ? "var(--bg-3)" : "var(--bg-2)"); box.setAttribute("stroke", "var(--bud)"); box.removeAttribute("stroke-dasharray");
+        titles.forEach(n => n.setAttribute("fill", "var(--ink)")); who.setAttribute("fill", "var(--muted)");
+        badge.setAttribute("fill", "var(--bud)"); icon.setAttribute("stroke", "var(--bg)");
+      } else {
+        box.setAttribute("fill", "var(--bg)"); box.setAttribute("stroke", "var(--lock)"); box.setAttribute("stroke-dasharray", "5 5");
+        titles.forEach(n => n.setAttribute("fill", "var(--muted)")); who.setAttribute("fill", "var(--lock)");
+        badge.setAttribute("fill", "var(--lock)"); icon.setAttribute("stroke", "var(--bg)");
+      }
+      if (ring) ring.setAttribute("stroke", s === "done" ? "var(--leaf)" : s === "open" ? "var(--bud)" : "var(--lock)");
+      icon.setAttribute("d", ICON[s]);
+      g.classList.toggle("dim", !isMine(t));
+      g.classList.toggle("hl", selected === t.id);
+      g.setAttribute("aria-pressed", selected === t.id ? "true" : "false");
+    });
+
+    // edges: cross-branch links only show for the selected task
+    edgeEls.forEach(({p, from, to, kind}) => {
+      const a = st[from], b = st[to];
+      const related = selected && (selected === from || selected === to);
+      const show = kind !== "cross" || related;
+      p.style.display = show ? "" : "none";
+      if (!show) return;
+      const width = kind === "branch" ? 5 : kind === "limb" ? 4 : kind === "join" ? 2.2 : 2;
+      p.setAttribute("stroke-width", related && kind !== "branch" ? width + 1 : width);
+      p.classList.remove("flow"); p.removeAttribute("stroke-dasharray");
+      if (a === "done" && b === "done") { p.setAttribute("stroke", "var(--bark-hi)"); p.setAttribute("opacity", "1"); }
+      else if (a === "done") { p.setAttribute("stroke", "var(--bud)"); p.setAttribute("opacity", ".8"); p.classList.add("flow"); }
+      else { p.setAttribute("stroke", kind === "branch" ? "var(--bark)" : "var(--lock)"); p.setAttribute("opacity", kind === "branch" ? ".8" : ".75"); if (kind !== "branch") p.setAttribute("stroke-dasharray", "2 7"); }
+      if (kind === "cross") p.setAttribute("stroke-dasharray", a === "done" ? "6 8" : "3 6");
+      const mine = person === "all" || [from, to].some(id => isMine(BY_ID[id]) && BY_ID[id].who[0] !== "all");
+      p.classList.toggle("dim", !mine && !related);
+    });
+
+    if (prevStatus) {
+      TASKS.forEach(t => {
+        if (prevStatus[t.id] === "locked" && st[t.id] === "open") {
+          const g = nodeEls[t.id].g; g.classList.remove("fresh"); void g.getBoundingClientRect(); g.classList.add("fresh");
+          setTimeout(() => g.classList.remove("fresh"), 4500);
+        }
+        if (prevStatus[t.id] !== "done" && st[t.id] === "done") {
+          const inner = nodeEls[t.id].inner; inner.classList.remove("pop"); void inner.getBoundingClientRect(); inner.classList.add("pop");
+        }
+      });
+    }
+    prevStatus = st;
+
+    renderSteps(st, ps, cur);
+    renderChips(st);
+    const total = TASKS.length, n = TASKS.filter(t => st[t.id] === "done").length;
+    const totalEl = document.getElementById("total");
+    totalEl.textContent = "";
+    const b = document.createElement("b"); b.textContent = n; totalEl.appendChild(b);
+    totalEl.appendChild(document.createTextNode(` من ${total} مهمة خلصت`));
+    if (selected) renderSheet();
+  }
+
+  // ---------- phase stepper ----------
+  const stepsEl = document.getElementById("steps");
+  function renderSteps(st, ps, cur) {
+    stepsEl.textContent = "";
+    PHASES.forEach((p, i) => {
+      const s = ps[i], state = i < cur ? "fin" : i === cur ? "cur" : "next";
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "step" + (state === "cur" ? " cur" : state === "fin" ? " fin" : "");
+      if (state === "cur") b.setAttribute("aria-current", "step");
+      const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = p.name; b.appendChild(nm);
+      const tr = document.createElement("span"); tr.className = "tr"; const fill = document.createElement("i"); fill.style.width = (100 * s.n / s.total) + "%"; tr.appendChild(fill); b.appendChild(tr);
+      const meta = document.createElement("span"); meta.className = "meta";
+      const c = document.createElement("span"); c.textContent = `${s.n}/${s.total}`;
+      const em = document.createElement("em"); em.textContent = state === "cur" ? "إحنا هنا" : state === "fin" ? "خلصت" : p.time;
+      meta.appendChild(c); meta.appendChild(em); b.appendChild(meta);
+      b.addEventListener("click", () => focusBand(i));
+      stepsEl.appendChild(b);
+    });
+  }
+
+  // ---------- chips ----------
+  const chipsEl = document.getElementById("chips");
+  function renderChips(st) {
+    const items = [["all", "الكل", null]].concat(COL_ORDER.map(k => [k, PEOPLE[k].name + (PEOPLE[k].note ? " · " + PEOPLE[k].note : ""), TRACK_COLOR[PEOPLE[k].track]]));
+    chipsEl.textContent = "";
+    items.forEach(([k, label, color]) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.setAttribute("aria-pressed", person === k ? "true" : "false");
+      if (color) { const d = document.createElement("span"); d.className = "dot"; d.style.background = color; b.appendChild(d); }
+      const s = document.createElement("span"); s.textContent = label; b.appendChild(s);
+      if (k !== "all") {
+        const mine = TASKS.filter(t => t.who.includes(k));
+        const n = document.createElement("span"); n.className = "n";
+        n.textContent = `${mine.filter(t => st[t.id] === "done").length}/${mine.length}`;
+        b.appendChild(n);
+      }
+      b.addEventListener("click", () => { person = k; try { localStorage.setItem("tree-person", k); } catch (e) {} paint(); });
+      chipsEl.appendChild(b);
+    });
+  }
+
+  // ---------- detail sheet ----------
+  const sheet = document.getElementById("sheet");
+  let confirmUndo = false, confirmTimer = null;
+  const fmtTime = iso => { try { return new Date(iso).toLocaleString("ar-EG", {weekday:"long", hour:"numeric", minute:"2-digit"}); } catch (e) { return ""; } };
+  const stateDot = s => s === "done" ? "var(--leaf)" : s === "open" ? "var(--bud)" : "var(--lock)";
+  const ownerName = id => { const t = BY_ID[id]; return t.who[0] === "all" ? "الفريق" : PEOPLE[t.who[0]].name; };
+
+  function renderSheet(skipNames) {
+    const t = BY_ID[selected];
+    if (!t) { sheet.hidden = true; return; }
+    const s = status(t.id);
+    sheet.hidden = false; sheet.textContent = "";
+    const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+    const close = mk("button", "close", "×"); close.type = "button"; close.setAttribute("aria-label", "قفل");
+    close.addEventListener("click", () => { selected = null; sheet.hidden = true; paint(); });
+    sheet.appendChild(close);
+    const tag = mk("div", "tag");
+    tag.appendChild(mk("span", "ph", "المرحلة " + t.ph + " · " + PHASES[t.ph].name));
+    if (t.kind === "gate") tag.appendChild(mk("span", "ph", "بوابة"));
+    if (t.opt) tag.appendChild(mk("span", "opt", "إضافي"));
+    sheet.appendChild(tag);
+    sheet.appendChild(mk("h2", null, t.t));
+    const owners = mk("div", "owners");
+    (t.who[0] === "all" ? [["الفريق كله", "var(--shared)"]] : t.who.map(k => [PEOPLE[k].name + (PEOPLE[k].note ? " · " + PEOPLE[k].note : ""), TRACK_COLOR[PEOPLE[k].track]])).forEach(([nm, c]) => {
+      const o = mk("span", "owner"); const d = mk("span", "dot"); d.style.background = c; o.appendChild(d); o.appendChild(mk("span", null, nm)); owners.appendChild(o);
+    });
+    sheet.appendChild(owners);
+    sheet.appendChild(mk("p", "desc", t.d));
+    const stBox = mk("div", "status " + (s === "done" ? "done" : s === "open" ? "open" : "locked"));
+    if (s === "done") {
+      const rec = done[t.id] || {};
+      const who = rec.by && PEOPLE[rec.by] ? (rec.by === myId ? "إنت" : PEOPLE[rec.by].name) : "حد من الفريق";
+      stBox.textContent = `خلصت. قفلها ${who}${rec.at ? " · " + fmtTime(rec.at) : ""}`;
+    } else if (s === "open") stBox.textContent = "متاحة دلوقتي. كل اللي قبلها خلص.";
+    else stBox.textContent = "مقفولة لحد ما يخلص: " + t.deps.filter(d => !done[d]).map(d => BY_ID[d].t).join("، ");
+    sheet.appendChild(stBox);
+    const list = (title, ids) => {
+      if (!ids.length) return;
+      const box = mk("div"); box.appendChild(mk("h3", null, title));
+      const ul = mk("ul", "deps");
+      ids.forEach(id => {
+        const li = mk("li"), b = mk("button"); b.type = "button";
+        const d = mk("span", "s"); d.style.background = stateDot(status(id)); b.appendChild(d);
+        b.appendChild(mk("span", null, BY_ID[id].t));
+        b.appendChild(mk("span", "w", ownerName(id)));
+        b.addEventListener("click", () => select(id, true));
+        li.appendChild(b); ul.appendChild(li);
+      });
+      box.appendChild(ul); sheet.appendChild(box);
+    };
+    list("محتاجة تخلص قبلها", t.deps);
+    list("لما تخلص هتفتح", CHILDREN[t.id] || []);
+    const act = mk("div", "act");
+    if (readOnly) act.appendChild(mk("p", "hint", "الداتابيز رافضة الكتابة دلوقتي، فإنت شايف الشجرة بس."));
+    else if (s === "open" && !myId) {
+      act.appendChild(mk("h3", null, "إنت مين؟ عشان نسجّل مين قفلها (مرة واحدة بس)"));
+      const grid = mk("div", "who");
+      Object.entries(PEOPLE).forEach(([k, p]) => {
+        const b = mk("button"); b.type = "button";
+        const d = mk("span", "dot"); d.style.background = TRACK_COLOR[p.track]; b.appendChild(d);
+        b.appendChild(mk("span", null, p.name));
+        b.addEventListener("click", () => { setMe(k); renderSheet(true); });
+        grid.appendChild(b);
+      });
+      act.appendChild(grid);
+    } else if (s === "open") {
+      const b = mk("button", "primary", "خلّصتها، افتح اللي بعدها"); b.type = "button";
+      b.addEventListener("click", () => complete(t.id, b)); act.appendChild(b);
+      const line = mk("div", "me-line"); line.appendChild(mk("span", null, "هتتسجل باسم " + PEOPLE[myId].name));
+      const ch = mk("button", null, "مش أنا"); ch.type = "button";
+      ch.addEventListener("click", () => { myId = null; try { localStorage.removeItem("tree-me"); } catch (e) {} renderSheet(true); });
+      line.appendChild(ch); act.appendChild(line);
+    } else if (s === "done") {
+      const blocking = (CHILDREN[t.id] || []).filter(c => done[c]);
+      if (blocking.length) act.appendChild(mk("p", "hint", "مينفعش ترجّعها لأن فيه مهام بعدها خلصت: " + blocking.map(c => BY_ID[c].t).join("، ")));
+      else {
+        const b = mk("button", "ghost" + (confirmUndo ? " warn" : ""), confirmUndo ? "متأكد؟ اضغط تاني عشان ترجّعها" : "رجّعها مش خالصة"); b.type = "button";
+        b.addEventListener("click", () => {
+          if (!confirmUndo) { confirmUndo = true; clearTimeout(confirmTimer); confirmTimer = setTimeout(() => { confirmUndo = false; renderSheet(true); }, 4000); renderSheet(true); return; }
+          confirmUndo = false; clearTimeout(confirmTimer); undo(t.id, b);
+        });
+        act.appendChild(b);
+      }
+    } else { const b = mk("button", "primary", "مقفولة لسه"); b.type = "button"; b.disabled = true; act.appendChild(b); }
+    sheet.appendChild(act);
+  }
+  function select(id, center) { selected = id; confirmUndo = false; paint(); if (center) centerOn(id); }
+
+  // ---------- writes ----------
+  const toastEl = document.getElementById("toast"); let toastTimer = null;
+  const toast = msg => { toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.hidden = true, 3800); };
+  const notice = document.getElementById("notice");
+  const setNotice = msg => { notice.textContent = msg || ""; notice.hidden = !msg; };
+  async function complete(id, btn) {
+    const before = TASKS.filter(t => status(t.id) === "open").map(t => t.id);
+    const curBefore = currentPhase(Object.fromEntries(TASKS.map(t => [t.id, status(t.id)])));
+    const rec = {done:true, by:myId || "", at:new Date().toISOString()};
+    if (btn) btn.disabled = true;
+    if (localOnly) { done[id] = rec; paint(); }
+    else {
+      try { await rest("PUT", "progress/" + id, rec); } catch (e) { handleWriteError(e); if (btn) btn.disabled = false; return; }
+      done[id] = done[id] || rec; paint();
+    }
+    const st = Object.fromEntries(TASKS.map(t => [t.id, status(t.id)]));
+    const curAfter = currentPhase(st);
+    const opened = TASKS.filter(t => st[t.id] === "open" && !before.includes(t.id) && t.id !== id).map(t => t.t);
+    if (curAfter > curBefore && curAfter < PHASES.length) toast(`المرحلة ${curBefore} خلصت. دخلنا ${PHASES[curAfter].name}`);
+    else if (curAfter === PHASES.length) toast("الشجرة كلها خلصت. جاهزين للتحكيم.");
+    else toast(opened.length ? "اتفتح: " + opened.join("، ") : "اتقفلت. فاضل مهام تانية قبل الفرع الجاي.");
+  }
+  async function undo(id, btn) {
+    if (btn) btn.disabled = true;
+    if (localOnly) { delete done[id]; paint(); return; }
+    try { await rest("DELETE", "progress/" + id); delete done[id]; paint(); } catch (e) { handleWriteError(e); if (btn) btn.disabled = false; }
+  }
+  async function rest(method, path, body) {
+    const r = await fetch(DB + "/" + path + ".json", {method, cache:"no-store", headers: body ? {"Content-Type":"application/json"} : undefined, body: body ? JSON.stringify(body) : undefined});
+    if (!r.ok) { const err = new Error("http " + r.status); err.status = r.status; throw err; }
+    return r.json();
+  }
+  function handleWriteError(e) {
+    if (e && (e.status === 401 || e.status === 403)) {
+      setNotice("الداتابيز رافضة الكتابة. غالبًا قواعد الأمان في فايربيز محتاجة تتظبط."); toast("محصلش حفظ: الداتابيز رافضة.");
+    } else toast(navigator.onLine === false ? "إنت أوفلاين. ارجع للنت وجرّب تاني." : "محصلش حفظ. جرّب تاني بعد شوية.");
+  }
+
+  // ---------- pan & zoom ----------
+  const view = {x:0, y:0, k:1};
+  const apply = () => world.setAttribute("transform", `translate(${view.x} ${view.y}) scale(${view.k})`);
+  const clampK = k => Math.min(2.4, Math.max(0.2, k));
+  function zoomAt(px, py, f) { const k = clampK(view.k * f), r = k / view.k; view.x = px - (px - view.x) * r; view.y = py - (py - view.y) * r; view.k = k; apply(); }
+  const LABEL_W = 240;
+  function fitRect(x0, x1, y0, y1, maxK, minK = 0) {
+    const r = svg.getBoundingClientRect();
+    let k = clampK(Math.min(maxK, r.width / (x1 - x0), r.height / (y1 - y0)));
+    if (k < minK) k = minK;
+    view.k = k; view.x = r.width / 2 - ((x0 + x1) / 2) * k; view.y = r.height / 2 - ((y0 + y1) / 2) * k; apply();
+  }
+  const fitAll = () => fitRect(TREE_X0 - 40, TREE_X1 + LABEL_W, bands[bands.length - 1].top - 60, bands[0].bottom + 110, 1);
+  function focusBand(i) {
+    const b = bands[Math.min(i, bands.length - 1)];
+    const r = svg.getBoundingClientRect();
+    if (r.width < 720) {
+      const st = Object.fromEntries(TASKS.map(t => [t.id, status(t.id)]));
+      const ids = TASKS.filter(t => t.ph === i && st[t.id] === "open" && isMine(t)).map(t => t.id);
+      const pick = ids.length ? ids : TASKS.filter(t => t.ph === i).map(t => t.id);
+      const xs = pick.map(id => pos[id].x);
+      fitRect(Math.min(...xs) - W, Math.max(...xs) + W, b.top - 40, b.bottom + 40, 0.75, 0.5);
+    } else fitRect(TREE_X0 - 30, TREE_X1 + LABEL_W, b.top - 50, b.bottom + (i === 0 ? 110 : 50), 1.05);
+  }
+  function focusOpen() {
+    const st = Object.fromEntries(TASKS.map(t => [t.id, status(t.id)]));
+    focusBand(Math.min(currentPhase(st), PHASES.length - 1));
+  }
+  function centerOn(id) {
+    const r = svg.getBoundingClientRect(), narrow = r.width < 720;
+    view.k = clampK(Math.max(view.k, 0.8));
+    const cx = narrow ? r.width / 2 : r.width / 2 + Math.min(190, r.width * 0.18);
+    const cy = narrow ? r.height * 0.28 : r.height / 2;
+    view.x = cx - pos[id].x * view.k; view.y = cy - pos[id].y * view.k; apply();
+  }
+
+  const pointers = new Map();
+  let dragStart = null, moved = 0, pinch = null, downNode = null, downBand = null;
+  svg.addEventListener("pointerdown", e => {
+    svg.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if (pointers.size === 1) {
+      dragStart = {x:e.clientX, y:e.clientY, vx:view.x, vy:view.y}; moved = 0;
+      const n = e.target.closest && e.target.closest(".node"); downNode = n ? n.getAttribute("data-id") : null;
+      const bl = e.target.closest && e.target.closest(".band-lbl"); downBand = bl ? +bl.getAttribute("data-ph") : null;
+    } else if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = {d:Math.hypot(a.x - b.x, a.y - b.y), cx:(a.x + b.x) / 2, cy:(a.y + b.y) / 2, k:view.k, vx:view.x, vy:view.y};
+      downNode = null; downBand = null;
+    }
+  });
+  svg.addEventListener("pointermove", e => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    const r = svg.getBoundingClientRect();
+    if (pointers.size === 2 && pinch) {
+      const [a, b] = [...pointers.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y), cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+      const k = clampK(pinch.k * d / pinch.d), ratio = k / pinch.k, px = pinch.cx - r.left, py = pinch.cy - r.top;
+      view.k = k; view.x = px - (px - pinch.vx) * ratio + (cx - pinch.cx); view.y = py - (py - pinch.vy) * ratio + (cy - pinch.cy);
+      moved = 99; apply();
+    } else if (pointers.size === 1 && dragStart) {
+      const dx = e.clientX - dragStart.x, dy = e.clientY - dragStart.y;
+      moved = Math.max(moved, Math.hypot(dx, dy));
+      if (moved > 4) { svg.classList.add("dragging"); view.x = dragStart.vx + dx; view.y = dragStart.vy + dy; apply(); }
+    }
+  });
+  const endPointer = e => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+    if (pointers.size === 0) {
+      svg.classList.remove("dragging");
+      if (moved <= 4 && e.type === "pointerup") {
+        if (downNode) select(downNode, false);
+        else if (downBand !== null) focusBand(downBand);
+      }
+      dragStart = null; downNode = null; downBand = null;
+    }
+  };
+  svg.addEventListener("pointerup", endPointer);
+  svg.addEventListener("pointercancel", endPointer);
+  svg.addEventListener("wheel", e => {
+    e.preventDefault();
+    const r = svg.getBoundingClientRect();
+    if (e.ctrlKey || Math.abs(e.deltaY) >= Math.abs(e.deltaX)) zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0016)));
+    else { view.x -= e.deltaX; apply(); }
+  }, {passive:false});
+  gNodes.addEventListener("keydown", e => {
+    const n = e.target.closest && e.target.closest(".node");
+    if (n && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(n.getAttribute("data-id"), true); }
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && selected) { selected = null; sheet.hidden = true; paint(); } });
+  const mid = () => { const r = svg.getBoundingClientRect(); return [r.width / 2, r.height / 2]; };
+  document.getElementById("zin").addEventListener("click", () => zoomAt(...mid(), 1.25));
+  document.getElementById("zout").addEventListener("click", () => zoomAt(...mid(), 0.8));
+  document.getElementById("zfit").addEventListener("click", fitAll);
+  document.getElementById("focusBtn").addEventListener("click", focusOpen);
+
+  // ---------- boot ----------
+  setNotice("");
+  paint();
+  let booted = false;
+  requestAnimationFrame(() => { focusOpen(); booted = true; });
+  let resizeT = null;
+  window.addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (!selected) focusOpen(); }, 150); });
+
+  const loadingEl = document.getElementById("loading");
+  const setupEl = document.getElementById("setup"), dbInput = document.getElementById("dbInput"), setupErr = document.getElementById("setupErr");
+  function demoMode() {
+    localOnly = true; loadingEl.hidden = true; setupEl.hidden = true;
+    notice.textContent = "وضع تجريبي: التقدم هنا مش بيتحفظ ومش بيوصل للفريق.";
+    const b = document.createElement("button"); b.type = "button"; b.textContent = "وصّل الداتابيز";
+    b.addEventListener("click", () => { setupEl.hidden = false; dbInput.focus(); });
+    notice.appendChild(b); notice.hidden = false;
+  }
+  document.getElementById("setupDemo").addEventListener("click", demoMode);
+  document.getElementById("setupForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const u = normDb(dbInput.value);
+    setupErr.hidden = true;
+    if (!u) { setupErr.textContent = "ده مش لينك داتابيز فايربيز. لازم ينتهي بـ firebaseio.com أو firebasedatabase.app"; setupErr.hidden = false; return; }
+    try {
+      const r = await fetch(u + "/progress.json", {cache:"no-store"});
+      if (!r.ok) throw new Error(r.status);
+    } catch (err) { setupErr.textContent = "مش قادر يقرا من الداتابيز دي. اتأكد إن القواعد بتسمح بالقراية وإن اللينك صح."; setupErr.hidden = false; return; }
+    location.hash = "db=" + u.replace(/^https:\/\//, "");
+    location.reload();
+  });
+
+  function applyServer(obj) {
+    const next = {};
+    if (obj && typeof obj === "object") for (const [k, x] of Object.entries(obj)) if (x && x.done && BY_ID[k]) next[k] = x;
+    done = next; paint();
+  }
+  (() => {
+    if (!DB) { loadingEl.hidden = true; setupEl.hidden = false; return; }
+    if (DB !== TEAM_DB && location.hash.indexOf("db=") === -1) history.replaceState(null, "", shareLink());
+    let cache = {}, gotFirst = false, pollT = null;
+    const first = () => {
+      if (gotFirst) return; gotFirst = true; clearTimeout(timer); loadingEl.hidden = true;
+      if (booted && !selected) focusOpen();
+    };
+    const timer = setTimeout(() => { if (!gotFirst) { loadingEl.textContent = "الاتصال بطيء. بيحاول يوصل للتقدم المشترك..."; startPolling(); } }, 8000);
+    async function poll() {
+      try { cache = (await rest("GET", "progress")) || {}; applyServer(cache); first(); setNotice(""); }
+      catch (e) { if (e && (e.status === 401 || e.status === 403)) setNotice("الداتابيز رافضة القراية. راجع قواعد الأمان في فايربيز."); }
+    }
+    function startPolling() { if (pollT) return; poll(); pollT = setInterval(poll, 5000); }
+    if (!("EventSource" in window)) { startPolling(); return; }
+    const es = new EventSource(DB + "/progress.json");
+    const onEv = (e, patch) => {
+      let msg; try { msg = JSON.parse(e.data); } catch (x) { return; }
+      if (!msg) return;
+      const path = msg.path || "/", data = msg.data;
+      if (path === "/") {
+        if (patch) Object.entries(data || {}).forEach(([k, v]) => { if (v === null) delete cache[k]; else cache[k] = v; });
+        else cache = data && typeof data === "object" ? data : {};
+      } else {
+        const parts = path.split("/").filter(Boolean), k = parts[0];
+        if (parts.length === 1) { if (data === null) delete cache[k]; else cache[k] = patch ? Object.assign({}, cache[k], data) : data; }
+        else { poll(); return; }
+      }
+      applyServer(cache); first(); if (!pollT) setNotice("");
+    };
+    es.addEventListener("put", e => onEv(e, false));
+    es.addEventListener("patch", e => onEv(e, true));
+    es.addEventListener("cancel", () => { es.close(); setNotice("الداتابيز قفلت القراية. راجع قواعد الأمان في فايربيز."); });
+    es.onerror = () => {
+      if (es.readyState === 2) startPolling();
+      else if (gotFirst) setNotice("الاتصال اتقطع. بيحاول يرجع لوحده...");
+    };
+    window.addEventListener("online", () => { if (pollT) poll(); });
+  })();
+})();
+</script>
+</body>
+</html>
