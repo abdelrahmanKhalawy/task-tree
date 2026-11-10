@@ -140,6 +140,9 @@ svg#tree.dragging{cursor:grabbing}
 .primary[disabled]{background:var(--bg-3);color:var(--muted);cursor:not-allowed}
 .ghost{border:1px solid var(--line);border-radius:12px;padding:11px 16px;font:500 13.5px var(--body);cursor:pointer;background:transparent;color:var(--ink)}
 .ghost.warn{border-color:var(--danger);color:var(--danger)}
+.brief{display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:var(--ink);text-decoration:none;font:500 13.5px var(--body);background:var(--bg-3)}
+.brief:hover{border-color:var(--bud)}
+.brief::after{content:"↗";color:var(--bud)}
 .hint{font-size:12px;color:var(--muted);margin:0;line-height:1.6}
 
 .toast{position:absolute;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);border-radius:14px;padding:10px 16px;font:500 13.5px var(--body);z-index:5;max-width:calc(100% - 32px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
@@ -235,6 +238,8 @@ svg#tree.dragging{cursor:grabbing}
     mohamed:{name:"محمد", track:"ai"},
     nada:{name:"ندى", track:"res"}
   };
+  const REPO = "https://github.com/abdelrahmanKhalawy/space-apps-2026/blob/main/";
+  const BRIEFS = {"r0": "tasks/0-kickoff/r0-start.md", "k1": "tasks/0-kickoff/k1-read-challenge-resources.md", "k6": "tasks/0-kickoff/k6-sensors-wiring.md", "k2": "tasks/0-kickoff/k2-lock-scope.md", "k3": "tasks/0-kickoff/k3-reading-contract.md", "k4": "tasks/0-kickoff/k4-empty-deploy.md", "k5": "tasks/0-kickoff/k5-mock-data.md", "n1": "tasks/1-v1-deliverable/n1-color-thresholds.md", "a1": "tasks/1-v1-deliverable/a1-readings-api.md", "a3": "tasks/1-v1-deliverable/a3-manual-entry-form.md", "h1": "tasks/1-v1-deliverable/h1-stable-readings.md", "i1": "tasks/1-v1-deliverable/i1-baseline-model.md", "a2": "tasks/1-v1-deliverable/a2-color-rules.md", "a4": "tasks/1-v1-deliverable/a4-dashboard-charts.md", "g1": "tasks/1-v1-deliverable/g1-gate-1.md", "a5": "tasks/2-v2-space/a5-live-readings.md", "a6": "tasks/2-v2-space/a6-ground-doctor-screen.md", "a7": "tasks/2-v2-space/a7-decision-screen.md", "h2": "tasks/2-v2-space/h2-device-to-server.md", "i2": "tasks/2-v2-space/i2-model-service.md", "n2": "tasks/2-v2-space/n2-space-explanations.md", "i3": "tasks/2-v2-space/i3-explain-cause.md", "g2": "tasks/2-v2-space/g2-gate-2.md", "a8": "tasks/3-v3-wow/a8-interactive-body.md", "a9": "tasks/3-v3-wow/a9-mission-modes.md", "i4": "tasks/3-v3-wow/i4-trend-forecast.md", "n3": "tasks/3-v3-wow/n3-assistant-sources.md", "i5": "tasks/3-v3-wow/i5-medical-assistant.md", "h3": "tasks/3-v3-wow/h3-device-enclosure.md", "f2": "tasks/3-v3-wow/f2-video-script.md", "g3": "tasks/3-v3-wow/g3-gate-3.md", "f1": "tasks/4-delivery/f1-feature-freeze.md", "f3": "tasks/4-delivery/f3-video-production.md", "f4": "tasks/4-delivery/f4-backup-slides.md", "f5": "tasks/4-delivery/f5-readme-and-sources.md", "f6": "tasks/4-delivery/f6-submit-cairo.md", "f7": "tasks/4-delivery/f7-submit-global.md", "f8": "tasks/4-delivery/f8-pitch-rehearsal.md", "c0": "tasks/4-delivery/c0-ready-for-judging.md"};
   const TRACK_COLOR = {hw:"var(--hw)", app:"var(--app)", ai:"var(--ai)", res:"var(--res)", shared:"var(--shared)"};
   const PHASES = [
     {name:"الانطلاق", time:"الجمعة 10:00"},
@@ -621,6 +626,11 @@ svg#tree.dragging{cursor:grabbing}
     });
     sheet.appendChild(owners);
     sheet.appendChild(mk("p", "desc", t.d));
+    if (BRIEFS[t.id]) {
+      const bl = mk("a", "brief", "افتح البريف: المطلوب ومعايير القبول");
+      bl.href = REPO + BRIEFS[t.id]; bl.target = "_blank"; bl.rel = "noopener";
+      sheet.appendChild(bl);
+    }
     const stBox = mk("div", "status " + (s === "done" ? "done" : s === "open" ? "open" : "locked"));
     if (s === "done") {
       const rec = done[t.id] || {};
